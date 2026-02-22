@@ -1,0 +1,99 @@
+pipeline {
+  agent any
+
+  environment {
+    DOCKERHUB_REPO = "mohamed1311990/dotnet_app"   
+    APP_NAME       = "dotnet_app"
+
+    DOCKERHUB_CREDS = "DOCKHUB_CREDS"
+    KUBECONFIG_CRED = "minikube-kubeconfig"
+  }
+
+  options {
+    timestamps()
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        script {
+          env.SHORT_SHA = sh(script: "git rev-parse --short=7 HEAD", returnStdout: true).trim()
+          env.BRANCH_SAFE = env.BRANCH_NAME.replaceAll('[^a-zA-Z0-9_.-]', '-').toLowerCase()
+        }
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        script {
+          env.IMAGE_TAG_SHA = "${env.BRANCH_SAFE}-${env.SHORT_SHA}"
+          env.IMAGE_SHA     = "${env.DOCKERHUB_REPO}:${env.IMAGE_TAG_SHA}"
+          env.IMAGE_BRANCH  = "${env.DOCKERHUB_REPO}:${env.BRANCH_SAFE}"
+
+          sh """
+            docker build -t ${env.IMAGE_SHA} -t ${env.IMAGE_BRANCH} .
+          """
+        }
+      }
+    }
+
+    stage('Push to Docker Hub') {
+      when {
+        anyOf {
+          branch 'dev'
+          branch 'test'
+          branch 'prod'
+        }
+      }
+      steps {
+        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDS,
+                                          usernameVariable: 'DH_USER',
+                                          passwordVariable: 'DH_PASS')]) {
+          sh """
+            echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+            docker push ${env.IMAGE_SHA}
+            docker push ${env.IMAGE_BRANCH}
+          """
+        }
+      }
+    }
+
+    stage('Deploy to Minikube (K8s)') {
+      when {
+        anyOf {
+          branch 'dev'
+          branch 'test'
+          branch 'prod'
+        }
+      }
+      steps {
+        withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+          sh """
+            export KUBECONFIG=$KUBECONFIG_FILE
+
+            # Create namespace per branch (optional; nice separation)
+            kubectl get ns ${env.BRANCH_SAFE} >/dev/null 2>&1 || kubectl create ns ${env.BRANCH_SAFE}
+
+            # Replace image placeholder and apply
+            mkdir -p .rendered
+            sed "s|__IMAGE__|${env.IMAGE_SHA}|g" k8s/deployment.yaml > .rendered/deployment.yaml
+
+            kubectl -n ${env.BRANCH_SAFE} apply -f .rendered/deployment.yaml
+            kubectl -n ${env.BRANCH_SAFE} apply -f k8s/service.yaml
+
+            kubectl -n ${env.BRANCH_SAFE} rollout status deploy/${env.APP_NAME} --timeout=120s
+            kubectl -n ${env.BRANCH_SAFE} get pods -o wide
+            kubectl -n ${env.BRANCH_SAFE} get svc ${env.APP_NAME} -o wide
+          """
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      sh "docker logout || true"
+    }
+  }
+}
