@@ -76,3 +76,33 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 Kubeconfig
+
+#---claude
+# Claude configuration and credentials
+.claude/
+claude.json
+.env
+.env.local
+.env.*.local
+
+# Claude API keys and secrets
+CLAUDE_API_KEY
+claude_api_key.txt
+
+# Claude Code/workspace files (if using Claude Code)
+.claude-code/
+claude-workspace.json
+
+# MCP server configs (if using Model Context Protocol)
+mcp-config.json
+mcp-server/logs/
+
+# Temporary Claude artifacts
+claude-artifacts/
+claude-tmp/
+
+# IDE/editor files that might contain secrets
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
