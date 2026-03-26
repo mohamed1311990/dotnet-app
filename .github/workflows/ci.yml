@@ -33,5 +33,5 @@ jobs:
           file: ./Helloweb/dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/dotnet_app:${{ steps.meta.outputs.branch_safe }}-${{ steps.meta.outputs.short_sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/dotnet_app:${{ steps.meta.outputs.branch_safe }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/dotnet_app:${{ github.ref_name == 'main' && 'prod' || github.ref_name }}-${{ steps.meta.outputs.short_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/dotnet_app:${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
