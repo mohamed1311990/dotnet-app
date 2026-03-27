@@ -1,4 +1,4 @@
 replicaCount: 2
 
 image:
-  tag: prod
+  tag: prod-a913885
