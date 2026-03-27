@@ -1,4 +1,4 @@
 replicaCount: 2
 image:
-  tag: prod-915d499
+  tag: prod-9efa621
   pullPolicy: IfNotPresent
