@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: dotnet-app
-  namespace: monitoring
+  namespace: prod
   labels:
     release: monitoring
 spec:
