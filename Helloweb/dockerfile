@@ -17,7 +17,7 @@ WORKDIR /app
 COPY --from=build /app/publish ./
 
 # ASP.NET Core listens on 8080 inside containers by convention
-ENV ASPNETCORE_URLS=http://+:123
+ENV ASPNETCORE_URLS=http://+:8123
 EXPOSE 8123
 
 ENTRYPOINT ["dotnet", "Helloweb.dll"]

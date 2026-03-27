@@ -1,4 +1,3 @@
 replicaCount: 2
-
 image:
-  tag: prod-a913885
+  tag: prod-86b475f

@@ -7,9 +7,9 @@ image:
 
 service:
   type: ClusterIP
-  port: 8080
+  port: 8123
 
-containerPort: 8080
+containerPort: 8123
 
 app:
   name: dotnet-app
